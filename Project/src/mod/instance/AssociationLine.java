@@ -24,6 +24,7 @@ public class AssociationLine extends JPanel
 	int					toSide;
 	Point				tp				= new Point(0, 0);
 	boolean				isSelect		= false;
+	boolean				isHighlight		= false;  // 新增 highlight 狀態
 	int					selectBoxSize	= 5;
 	CanvasPanelHandler	cph;
 
@@ -45,6 +46,16 @@ public class AssociationLine extends JPanel
 				fp.y - this.getLocation().y);
 		tpPrime = new Point(tp.x - this.getLocation().x,
 				tp.y - this.getLocation().y);
+		
+		// 根據 highlight 狀態設定顏色
+		if (isHighlight) {
+			g.setColor(Color.RED);
+			// 如果是 highlight，可以考慮加粗線條
+			// ((Graphics2D)g).setStroke(new BasicStroke(2.0f));
+		} else {
+			g.setColor(Color.BLACK);
+		}
+		
 		g.drawLine(fpPrime.x, fpPrime.y, tpPrime.x, tpPrime.y);
 		paintArrow(g, tpPrime);
 		if (isSelect == true)
@@ -134,8 +145,12 @@ public class AssociationLine extends JPanel
 	public void paintSelect(Graphics gra)
 	{
 		gra.setColor(Color.BLACK);
-		gra.fillRect(fp.x, fp.y, selectBoxSize, selectBoxSize);
-		gra.fillRect(tp.x, tp.y, selectBoxSize, selectBoxSize);
+		gra.fillRect(fp.x - this.getLocation().x, 
+				    fp.y - this.getLocation().y, 
+				    selectBoxSize, selectBoxSize);
+		gra.fillRect(tp.x - this.getLocation().x, 
+				    tp.y - this.getLocation().y, 
+				    selectBoxSize, selectBoxSize);
 	}
 
 	public boolean isSelect()
@@ -146,5 +161,37 @@ public class AssociationLine extends JPanel
 	public void setSelect(boolean isSelect)
 	{
 		this.isSelect = isSelect;
+	}
+	
+	// 新增 highlight 相關方法
+	public boolean isHighlight()
+	{
+		return isHighlight;
+	}
+	
+	public void setHighlight(boolean highlight)
+	{
+		this.isHighlight = highlight;
+	}
+	
+	// 新增 getter 方法
+	public JPanel getFrom()
+	{
+		return from;
+	}
+	
+	public JPanel getTo()
+	{
+		return to;
+	}
+	
+	public int getFromSide()
+	{
+		return fromSide;
+	}
+	
+	public int getToSide()
+	{
+		return toSide;
 	}
 }
