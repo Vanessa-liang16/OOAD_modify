@@ -137,7 +137,6 @@ public class DependencyLine extends JPanel
     @Override
     public void setConnect(DragPack dPack)
     {
-        System.out.println("DependencyLine setConnect 被呼叫");
         
         Point mfp = dPack.getFrom();
         Point mtp = dPack.getTo();
@@ -158,10 +157,6 @@ public class DependencyLine extends JPanel
         fromSide = new AreaDefine().getArea(new Point(0, 0), from.getSize(), relativeFrom);
         toSide = new AreaDefine().getArea(new Point(0, 0), to.getSize(), relativeTo);
         
-        System.out.println("起點物件: " + from.getClass().getSimpleName());
-        System.out.println("終點物件: " + to.getClass().getSimpleName());
-        System.out.println("from side: " + fromSide);
-        System.out.println("to side: " + toSide);
         
         renewConnect();
     }
