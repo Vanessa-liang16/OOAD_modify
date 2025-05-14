@@ -57,21 +57,29 @@ public class CanvasPanelHandler extends PanelHandler
 	@Override
 	public void ActionPerformed(MouseEvent e)
 	{
+		System.out.println("CanvasPanelHandler ActionPerformed - 功能索引: " + core.getCurrentFuncIndex());
+		
 		switch (core.getCurrentFuncIndex())
 		{
 			case 0:
 				selectByClick(e);
 				break;
-			case 1:
-			case 2:
-			case 3:
-			case 6:   //ADD
+			case 1:  
+			case 2:  
+			case 3:  
+			case 6:   // ADD - 線條模式
+				// 在線條模式下，清除 highlight 但不做其他處理
+				// 允許在任何地方開始拖曳
+				clearAllHighlights();
+				System.out.println("準備繪製線條類型: " + core.getCurrentFuncIndex());
 				break;
-			case 4:
-			case 5:
+			case 4:  
+			case 5:  
+				clearAllHighlights();
 				addObject(core.getCurrentFunc(), e.getPoint());
 				break;
 			default:
+				System.out.println("未知的功能索引: " + core.getCurrentFuncIndex());
 				break;
 		}
 		repaintComp();
@@ -79,6 +87,8 @@ public class CanvasPanelHandler extends PanelHandler
 
 	public void ActionPerformed(DragPack dp)
 	{
+		System.out.println("DragPack ActionPerformed - 功能索引: " + core.getCurrentFuncIndex());
+		
 		switch (core.getCurrentFuncIndex())
 		{
 			case 0:
@@ -87,7 +97,9 @@ public class CanvasPanelHandler extends PanelHandler
 			case 1:
 			case 2:
 			case 3:
-			case 6:   //ADD
+			case 6:   // ADD
+				// 在線條模式下，總是嘗試畫線
+				// 不管起點是否在 port 上
 				addLine(core.getCurrentFunc(), dp);
 				break;
 			case 4:
@@ -108,56 +120,6 @@ public class CanvasPanelHandler extends PanelHandler
 		contextPanel.updateUI();
 	}
 
-	// void selectByClick(MouseEvent e)
-	// {
-	// 	boolean isSelect = false;
-	// 	selectComp = new Vector <>();
-	// 	for (int i = 0; i < members.size(); i ++)
-	// 	{
-	// 		if (isInside(members.elementAt(i), e.getPoint()) == true
-	// 				&& isSelect == false)
-	// 		{
-	// 			switch (core.isFuncComponent(members.elementAt(i)))
-	// 			{
-	// 				case 0:
-	// 					((BasicClass) members.elementAt(i)).setSelect(true);
-	// 					selectComp.add(members.elementAt(i));
-	// 					isSelect = true;
-	// 					break;
-	// 				case 1:
-	// 					((UseCase) members.elementAt(i)).setSelect(true);
-	// 					selectComp.add(members.elementAt(i));
-	// 					isSelect = true;
-	// 					break;
-	// 				case 5:
-	// 					Point p = e.getPoint();
-	// 					p.x -= members.elementAt(i).getLocation().x;
-	// 					p.y -= members.elementAt(i).getLocation().y;
-	// 					if (groupIsSelect((GroupContainer) members.elementAt(i),
-	// 							p))
-	// 					{
-	// 						((GroupContainer) members.elementAt(i))
-	// 								.setSelect(true);
-	// 						selectComp.add(members.elementAt(i));
-	// 						isSelect = true;
-	// 					}
-	// 					else
-	// 					{
-	// 						((GroupContainer) members.elementAt(i))
-	// 								.setSelect(false);
-	// 					}
-	// 					break;
-	// 				default:
-	// 					break;
-	// 			}
-	// 		}
-	// 		else
-	// 		{
-	// 			setSelectAllType(members.elementAt(i), false);
-	// 		}
-	// 	}
-	// 	repaintComp();
-	// }
 	void selectByClick(MouseEvent e)
 	{
 		System.out.println("selectByClick 被呼叫，點擊位置: " + e.getPoint());
@@ -165,70 +127,78 @@ public class CanvasPanelHandler extends PanelHandler
 		boolean isSelect = false;
 		selectComp = new Vector<>();
 		
-		// 先檢查是否點擊在 port 上
-		for (int i = 0; i < members.size(); i++)
+		// 只在選擇模式下處理 port highlight
+		if (core.getCurrentFuncIndex() == 0)
 		{
-			JPanel member = members.elementAt(i);
-			if (isInside(member, e.getPoint()))
+			// 先檢查是否點擊在 port 上
+			for (int i = 0; i < members.size(); i++)
 			{
-				System.out.println("點擊在物件 " + member.getClass().getSimpleName() + " 內");
-				int port = isClickOnPort(member, e.getPoint());
-				if (port != -1)
+				JPanel member = members.elementAt(i);
+				if (isInside(member, e.getPoint()))
 				{
-					System.out.println("點擊在 port " + port + " 上");
-					// 點擊在 port 上，highlight 相連的線條
-					highlightConnectedLines(member, port);
-					return; // 不進行選擇操作
+					System.out.println("點擊在物件 " + member.getClass().getSimpleName() + " 內");
+					int port = isClickOnPort(member, e.getPoint());
+					if (port != -1)
+					{
+						System.out.println("點擊在 port " + port + " 上");
+						// 點擊在 port 上，highlight 相連的線條
+						highlightConnectedLines(member, port);
+						return; // 不進行選擇操作
+					}
 				}
 			}
+			
+			// 如果不是點擊在 port 上，清除所有 highlight
+			System.out.println("清除 highlight");
+			clearAllHighlights();
 		}
 		
-		// 如果不是點擊在 port 上，清除所有 highlight
-		System.out.println("不是點擊在 port 上，清除 highlight");
-		clearAllHighlights();
-		
-		// 原有的選擇邏輯
-		for (int i = 0; i < members.size(); i++)
+		// 原有的選擇邏輯（只在選擇模式下執行）
+		if (core.getCurrentFuncIndex() == 0)
 		{
-			if (isInside(members.elementAt(i), e.getPoint()) == true
-					&& isSelect == false)
+			for (int i = 0; i < members.size(); i++)
 			{
-				switch (core.isFuncComponent(members.elementAt(i)))
+				if (isInside(members.elementAt(i), e.getPoint()) == true
+						&& isSelect == false)
 				{
-					case 0:
-						((BasicClass) members.elementAt(i)).setSelect(true);
-						selectComp.add(members.elementAt(i));
-						isSelect = true;
-						break;
-					case 1:
-						((UseCase) members.elementAt(i)).setSelect(true);
-						selectComp.add(members.elementAt(i));
-						isSelect = true;
-						break;
-					case 5:
-						Point p = e.getPoint();
-						p.x -= members.elementAt(i).getLocation().x;
-						p.y -= members.elementAt(i).getLocation().y;
-						if (groupIsSelect((GroupContainer) members.elementAt(i), p))
-						{
-							((GroupContainer) members.elementAt(i)).setSelect(true);
+					switch (core.isFuncComponent(members.elementAt(i)))
+					{
+						case 0:
+							((BasicClass) members.elementAt(i)).setSelect(true);
 							selectComp.add(members.elementAt(i));
 							isSelect = true;
-						}
-						else
-						{
-							((GroupContainer) members.elementAt(i)).setSelect(false);
-						}
-						break;
-					default:
-						break;
+							break;
+						case 1:
+							((UseCase) members.elementAt(i)).setSelect(true);
+							selectComp.add(members.elementAt(i));
+							isSelect = true;
+							break;
+						case 5:
+							Point p = e.getPoint();
+							p.x -= members.elementAt(i).getLocation().x;
+							p.y -= members.elementAt(i).getLocation().y;
+							if (groupIsSelect((GroupContainer) members.elementAt(i), p))
+							{
+								((GroupContainer) members.elementAt(i)).setSelect(true);
+								selectComp.add(members.elementAt(i));
+								isSelect = true;
+							}
+							else
+							{
+								((GroupContainer) members.elementAt(i)).setSelect(false);
+							}
+							break;
+						default:
+							break;
+					}
+				}
+				else
+				{
+					setSelectAllType(members.elementAt(i), false);
 				}
 			}
-			else
-			{
-				setSelectAllType(members.elementAt(i), false);
-			}
 		}
+		
 		repaintComp();
 	}
 
@@ -435,26 +405,51 @@ public class CanvasPanelHandler extends PanelHandler
 
 	void addLine(JPanel funcObj, DragPack dPack)
 	{
+		System.out.println("=== addLine 開始 ===");
+		System.out.println("拖曳起點: " + dPack.getFrom());
+		System.out.println("拖曳終點: " + dPack.getTo());
+		
+		// 找出起點和終點的物件
+		JPanel fromObj = null;
+		JPanel toObj = null;
 		
 		for (int i = 0; i < members.size(); i++)
 		{
-			if (isInside(members.elementAt(i), dPack.getFrom()) == true)
+			JPanel member = members.elementAt(i);
+			
+			// 判斷起點在哪個物件上
+			if (fromObj == null && isInside(member, dPack.getFrom()))
 			{
-				dPack.setFromObj(members.elementAt(i));
+				fromObj = member;
+				System.out.println("找到起點物件: " + member.getClass().getSimpleName());
 			}
-			if (isInside(members.elementAt(i), dPack.getTo()) == true)
+			
+			// 判斷終點在哪個物件上
+			if (toObj == null && isInside(member, dPack.getTo()))
 			{
-				dPack.setToObj(members.elementAt(i));
+				toObj = member;
+				System.out.println("找到終點物件: " + member.getClass().getSimpleName());
 			}
 		}
 		
-		if (dPack.getFromObj() == dPack.getToObj()
-				|| dPack.getFromObj() == contextPanel
-				|| dPack.getToObj() == contextPanel)
+		// 設定拖曳物件
+		dPack.setFromObj(fromObj);
+		dPack.setToObj(toObj);
+		
+		// 驗證連線是否有效
+		if (fromObj == null || toObj == null)
 		{
+			System.out.println("無效的連線：找不到起點或終點物件");
 			return;
 		}
 		
+		if (fromObj == toObj)
+		{
+			System.out.println("無效的連線：起點和終點相同");
+			return;
+		}
+		
+		// 處理線條連接
 		switch (members.size())
 		{
 			case 0:
@@ -481,15 +476,11 @@ public class CanvasPanelHandler extends PanelHandler
 						break;
 					default:
 						System.out.println("未知的線條類型");
-						break;
+						return;
 				}
 				
 				// 加入線條到 members
-				if (members.contains(funcObj))
-				{
-					System.out.println("線條已經在 members 中");
-				}
-				else
+				if (!members.contains(funcObj))
 				{
 					members.add(funcObj);
 					System.out.println("線條加入到 members");
@@ -499,7 +490,8 @@ public class CanvasPanelHandler extends PanelHandler
 				System.out.println("線條加入到面板");
 				break;
 		}
-	
+		
+		System.out.println("=== addLine 結束 ===");
 	}
 
 	void addObject(JPanel funcObj, Point point)
