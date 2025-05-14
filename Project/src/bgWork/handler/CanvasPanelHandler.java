@@ -69,9 +69,7 @@ public class CanvasPanelHandler extends PanelHandler
 			case 3:  
 			case 6:   // ADD - 線條模式
 				// 在線條模式下，清除 highlight 但不做其他處理
-				// 允許在任何地方開始拖曳
 				clearAllHighlights();
-				System.out.println("準備繪製線條類型: " + core.getCurrentFuncIndex());
 				break;
 			case 4:  
 			case 5:  
@@ -79,7 +77,6 @@ public class CanvasPanelHandler extends PanelHandler
 				addObject(core.getCurrentFunc(), e.getPoint());
 				break;
 			default:
-				System.out.println("未知的功能索引: " + core.getCurrentFuncIndex());
 				break;
 		}
 		repaintComp();
@@ -87,7 +84,6 @@ public class CanvasPanelHandler extends PanelHandler
 
 	public void ActionPerformed(DragPack dp)
 	{
-		System.out.println("DragPack ActionPerformed - 功能索引: " + core.getCurrentFuncIndex());
 		
 		switch (core.getCurrentFuncIndex())
 		{
@@ -405,9 +401,6 @@ public class CanvasPanelHandler extends PanelHandler
 
 	void addLine(JPanel funcObj, DragPack dPack)
 	{
-		System.out.println("=== addLine 開始 ===");
-		System.out.println("拖曳起點: " + dPack.getFrom());
-		System.out.println("拖曳終點: " + dPack.getTo());
 		
 		// 找出起點和終點的物件
 		JPanel fromObj = null;
@@ -421,14 +414,14 @@ public class CanvasPanelHandler extends PanelHandler
 			if (fromObj == null && isInside(member, dPack.getFrom()))
 			{
 				fromObj = member;
-				System.out.println("找到起點物件: " + member.getClass().getSimpleName());
+				
 			}
 			
 			// 判斷終點在哪個物件上
 			if (toObj == null && isInside(member, dPack.getTo()))
 			{
 				toObj = member;
-				System.out.println("找到終點物件: " + member.getClass().getSimpleName());
+				
 			}
 		}
 		
@@ -439,13 +432,13 @@ public class CanvasPanelHandler extends PanelHandler
 		// 驗證連線是否有效
 		if (fromObj == null || toObj == null)
 		{
-			System.out.println("無效的連線：找不到起點或終點物件");
+			
 			return;
 		}
 		
 		if (fromObj == toObj)
 		{
-			System.out.println("無效的連線：起點和終點相同");
+			
 			return;
 		}
 		
@@ -475,7 +468,6 @@ public class CanvasPanelHandler extends PanelHandler
 						((DependencyLine) funcObj).setConnect(dPack);
 						break;
 					default:
-						System.out.println("未知的線條類型");
 						return;
 				}
 				
@@ -483,15 +475,15 @@ public class CanvasPanelHandler extends PanelHandler
 				if (!members.contains(funcObj))
 				{
 					members.add(funcObj);
-					System.out.println("線條加入到 members");
+					
 				}
 				
 				contextPanel.add(funcObj, 0);
-				System.out.println("線條加入到面板");
+			
 				break;
 		}
 		
-		System.out.println("=== addLine 結束 ===");
+		
 	}
 
 	void addObject(JPanel funcObj, Point point)
