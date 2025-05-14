@@ -137,16 +137,33 @@ public class DependencyLine extends JPanel
     @Override
     public void setConnect(DragPack dPack)
     {
+        System.out.println("DependencyLine setConnect 被呼叫");
+        
         Point mfp = dPack.getFrom();
         Point mtp = dPack.getTo();
         from = (JPanel) dPack.getFromObj();
         to = (JPanel) dPack.getToObj();
-        fromSide = new AreaDefine().getArea(from.getLocation(), from.getSize(),
-                mfp);
-        toSide = new AreaDefine().getArea(to.getLocation(), to.getSize(), mtp);
+        
+        // 使用拖曳的實際點來計算 side
+        // 將滑鼠點擊位置轉換為相對於物件的位置
+        Point relativeFrom = new Point(
+            mfp.x - from.getLocation().x,
+            mfp.y - from.getLocation().y
+        );
+        Point relativeTo = new Point(
+            mtp.x - to.getLocation().x,
+            mtp.y - to.getLocation().y
+        );
+        
+        fromSide = new AreaDefine().getArea(new Point(0, 0), from.getSize(), relativeFrom);
+        toSide = new AreaDefine().getArea(new Point(0, 0), to.getSize(), relativeTo);
+        
+        System.out.println("起點物件: " + from.getClass().getSimpleName());
+        System.out.println("終點物件: " + to.getClass().getSimpleName());
+        System.out.println("from side: " + fromSide);
+        System.out.println("to side: " + toSide);
+        
         renewConnect();
-        System.out.println("from side " + fromSide);
-        System.out.println("to side " + toSide);
     }
 
     void renewConnect()
