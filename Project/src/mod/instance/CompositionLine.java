@@ -5,6 +5,8 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Polygon;
+import java.awt.BasicStroke;
+import java.awt.Graphics2D;
 
 import javax.swing.JPanel;
 
@@ -27,6 +29,7 @@ public class CompositionLine extends JPanel
 	int					arrowSize		= 6;
 	int					panelExtendSize	= 10;
 	boolean				isSelect		= false;
+	boolean				isHighlight		= false;  // 新增 highlight 狀態
 	int					selectBoxSize	= 5;
 	CanvasPanelHandler	cph;
 
@@ -48,7 +51,15 @@ public class CompositionLine extends JPanel
 				fp.y - this.getLocation().y);
 		tpPrime = new Point(tp.x - this.getLocation().x,
 				tp.y - this.getLocation().y);
-		g.setColor(Color.BLACK);
+		
+		// 根據 highlight 狀態設定顏色和線條粗細
+		if (isHighlight) {
+			g.setColor(Color.RED);
+			((Graphics2D)g).setStroke(new BasicStroke(2.0f));
+		} else {
+			g.setColor(Color.BLACK);
+		}
+		
 		g.drawLine(fpPrime.x, fpPrime.y, tpPrime.x, tpPrime.y);
 		paintArrow(g, tpPrime);
 		if (isSelect == true)
@@ -78,7 +89,12 @@ public class CompositionLine extends JPanel
 		Polygon polygon = new Polygon(x, y, x.length);
 		g.setColor(Color.WHITE);
 		g.fillPolygon(polygon);
-		g.setColor(Color.BLACK);
+		// 如果是 highlight 狀態，邊框也使用紅色
+		if (isHighlight) {
+			g.setColor(Color.RED);
+		} else {
+			g.setColor(Color.BLACK);
+		}
 		g.drawPolygon(polygon);
 	}
 
@@ -148,8 +164,12 @@ public class CompositionLine extends JPanel
 	public void paintSelect(Graphics gra)
 	{
 		gra.setColor(Color.BLACK);
-		gra.fillRect(fp.x, fp.y, selectBoxSize, selectBoxSize);
-		gra.fillRect(tp.x, tp.y, selectBoxSize, selectBoxSize);
+		gra.fillRect(fp.x - this.getLocation().x, 
+				    fp.y - this.getLocation().y, 
+				    selectBoxSize, selectBoxSize);
+		gra.fillRect(tp.x - this.getLocation().x, 
+				    tp.y - this.getLocation().y, 
+				    selectBoxSize, selectBoxSize);
 	}
 
 	public boolean isSelect()
@@ -160,5 +180,37 @@ public class CompositionLine extends JPanel
 	public void setSelect(boolean isSelect)
 	{
 		this.isSelect = isSelect;
+	}
+	
+	// 新增 highlight 相關方法
+	public boolean isHighlight()
+	{
+		return isHighlight;
+	}
+	
+	public void setHighlight(boolean highlight)
+	{
+		this.isHighlight = highlight;
+	}
+	
+	// 新增 getter 方法
+	public JPanel getFrom()
+	{
+		return from;
+	}
+	
+	public JPanel getTo()
+	{
+		return to;
+	}
+	
+	public int getFromSide()
+	{
+		return fromSide;
+	}
+	
+	public int getToSide()
+	{
+		return toSide;
 	}
 }
