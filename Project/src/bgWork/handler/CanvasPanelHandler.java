@@ -11,7 +11,8 @@ import java.util.Vector;
 import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
 
-import Listener.CPHActionListener;
+import Define.AreaDefine;
+import Listener.CPHActionListener;   
 import Pack.DragPack;
 import Pack.SendText;
 import bgWork.InitProcess;
@@ -107,11 +108,87 @@ public class CanvasPanelHandler extends PanelHandler
 		contextPanel.updateUI();
 	}
 
+	// void selectByClick(MouseEvent e)
+	// {
+	// 	boolean isSelect = false;
+	// 	selectComp = new Vector <>();
+	// 	for (int i = 0; i < members.size(); i ++)
+	// 	{
+	// 		if (isInside(members.elementAt(i), e.getPoint()) == true
+	// 				&& isSelect == false)
+	// 		{
+	// 			switch (core.isFuncComponent(members.elementAt(i)))
+	// 			{
+	// 				case 0:
+	// 					((BasicClass) members.elementAt(i)).setSelect(true);
+	// 					selectComp.add(members.elementAt(i));
+	// 					isSelect = true;
+	// 					break;
+	// 				case 1:
+	// 					((UseCase) members.elementAt(i)).setSelect(true);
+	// 					selectComp.add(members.elementAt(i));
+	// 					isSelect = true;
+	// 					break;
+	// 				case 5:
+	// 					Point p = e.getPoint();
+	// 					p.x -= members.elementAt(i).getLocation().x;
+	// 					p.y -= members.elementAt(i).getLocation().y;
+	// 					if (groupIsSelect((GroupContainer) members.elementAt(i),
+	// 							p))
+	// 					{
+	// 						((GroupContainer) members.elementAt(i))
+	// 								.setSelect(true);
+	// 						selectComp.add(members.elementAt(i));
+	// 						isSelect = true;
+	// 					}
+	// 					else
+	// 					{
+	// 						((GroupContainer) members.elementAt(i))
+	// 								.setSelect(false);
+	// 					}
+	// 					break;
+	// 				default:
+	// 					break;
+	// 			}
+	// 		}
+	// 		else
+	// 		{
+	// 			setSelectAllType(members.elementAt(i), false);
+	// 		}
+	// 	}
+	// 	repaintComp();
+	// }
 	void selectByClick(MouseEvent e)
 	{
+		System.out.println("selectByClick 被呼叫，點擊位置: " + e.getPoint());
+		
 		boolean isSelect = false;
-		selectComp = new Vector <>();
-		for (int i = 0; i < members.size(); i ++)
+		selectComp = new Vector<>();
+		
+		// 先檢查是否點擊在 port 上
+		for (int i = 0; i < members.size(); i++)
+		{
+			JPanel member = members.elementAt(i);
+			if (isInside(member, e.getPoint()))
+			{
+				System.out.println("點擊在物件 " + member.getClass().getSimpleName() + " 內");
+				int port = isClickOnPort(member, e.getPoint());
+				if (port != -1)
+				{
+					System.out.println("點擊在 port " + port + " 上");
+					// 點擊在 port 上，highlight 相連的線條
+					highlightConnectedLines(member, port);
+					return; // 不進行選擇操作
+				}
+			}
+		}
+		
+		// 如果不是點擊在 port 上，清除所有 highlight
+		System.out.println("不是點擊在 port 上，清除 highlight");
+		clearAllHighlights();
+		
+		// 原有的選擇邏輯
+		for (int i = 0; i < members.size(); i++)
 		{
 			if (isInside(members.elementAt(i), e.getPoint()) == true
 					&& isSelect == false)
@@ -132,18 +209,15 @@ public class CanvasPanelHandler extends PanelHandler
 						Point p = e.getPoint();
 						p.x -= members.elementAt(i).getLocation().x;
 						p.y -= members.elementAt(i).getLocation().y;
-						if (groupIsSelect((GroupContainer) members.elementAt(i),
-								p))
+						if (groupIsSelect((GroupContainer) members.elementAt(i), p))
 						{
-							((GroupContainer) members.elementAt(i))
-									.setSelect(true);
+							((GroupContainer) members.elementAt(i)).setSelect(true);
 							selectComp.add(members.elementAt(i));
 							isSelect = true;
 						}
 						else
 						{
-							((GroupContainer) members.elementAt(i))
-									.setSelect(false);
+							((GroupContainer) members.elementAt(i)).setSelect(false);
 						}
 						break;
 					default:
@@ -361,7 +435,8 @@ public class CanvasPanelHandler extends PanelHandler
 
 	void addLine(JPanel funcObj, DragPack dPack)
 	{
-		for (int i = 0; i < members.size(); i ++)
+		
+		for (int i = 0; i < members.size(); i++)
 		{
 			if (isInside(members.elementAt(i), dPack.getFrom()) == true)
 			{
@@ -372,19 +447,25 @@ public class CanvasPanelHandler extends PanelHandler
 				dPack.setToObj(members.elementAt(i));
 			}
 		}
+		
 		if (dPack.getFromObj() == dPack.getToObj()
 				|| dPack.getFromObj() == contextPanel
 				|| dPack.getToObj() == contextPanel)
 		{
 			return;
 		}
+		
 		switch (members.size())
 		{
 			case 0:
 			case 1:
+				System.out.println("成員數量不足");
 				break;
 			default:
-				switch (core.isLine(funcObj))
+				int lineType = core.isLine(funcObj);
+				System.out.println("線條類型: " + lineType);
+				
+				switch (lineType)
 				{
 					case 0:
 						((AssociationLine) funcObj).setConnect(dPack);
@@ -395,15 +476,30 @@ public class CanvasPanelHandler extends PanelHandler
 					case 2:
 						((GeneralizationLine) funcObj).setConnect(dPack);
 						break;
-					case 3: // Add this case for DependencyLine
+					case 3:
 						((DependencyLine) funcObj).setConnect(dPack);
 						break;
 					default:
+						System.out.println("未知的線條類型");
 						break;
 				}
+				
+				// 加入線條到 members
+				if (members.contains(funcObj))
+				{
+					System.out.println("線條已經在 members 中");
+				}
+				else
+				{
+					members.add(funcObj);
+					System.out.println("線條加入到 members");
+				}
+				
 				contextPanel.add(funcObj, 0);
+				System.out.println("線條加入到面板");
 				break;
 		}
+	
 	}
 
 	void addObject(JPanel funcObj, Point point)
@@ -544,4 +640,168 @@ public class CanvasPanelHandler extends PanelHandler
 		}
 		return location;
 	}
+
+	//ADD
+	// 檢查是否點擊在 port 上
+	public int isClickOnPort(JPanel component, Point clickPoint)
+	{
+		if (component instanceof BasicClass || component instanceof UseCase)
+		{
+			Point componentLocation = component.getLocation();
+			Point relativeClick = new Point(
+				clickPoint.x - componentLocation.x,
+				clickPoint.y - componentLocation.y
+			);
+			
+			Dimension componentSize = component.getSize();
+			int portSize = 5; // 與 selectBoxSize 相同
+			int tolerance = 3; // 增加點擊容錯範圍
+			
+			// 檢查上方 port
+			if (relativeClick.x >= componentSize.width/2 - portSize - tolerance &&
+				relativeClick.x <= componentSize.width/2 + portSize + tolerance &&
+				relativeClick.y >= -tolerance && 
+				relativeClick.y <= portSize + tolerance)
+			{
+				return new AreaDefine().TOP;
+			}
+			
+			// 檢查右方 port
+			if (relativeClick.x >= componentSize.width - portSize - tolerance &&
+				relativeClick.x <= componentSize.width + tolerance &&
+				relativeClick.y >= componentSize.height/2 - portSize - tolerance &&
+				relativeClick.y <= componentSize.height/2 + portSize + tolerance)
+			{
+				return new AreaDefine().RIGHT;
+			}
+			
+			// 檢查左方 port
+			if (relativeClick.x >= -tolerance && 
+				relativeClick.x <= portSize + tolerance &&
+				relativeClick.y >= componentSize.height/2 - portSize - tolerance &&
+				relativeClick.y <= componentSize.height/2 + portSize + tolerance)
+			{
+				return new AreaDefine().LEFT;
+			}
+			
+			// 檢查下方 port
+			if (relativeClick.x >= componentSize.width/2 - portSize - tolerance &&
+				relativeClick.x <= componentSize.width/2 + portSize + tolerance &&
+				relativeClick.y >= componentSize.height - portSize - tolerance &&
+				relativeClick.y <= componentSize.height + tolerance)
+			{
+				return new AreaDefine().BOTTOM;
+			}
+		}
+		return -1; // 不在任何 port 上
+	}
+
+	
+	// Highlight 與特定物件和 port 相連的線條
+	public void highlightConnectedLines(JPanel component, int port)
+	{
+		
+		// 先清除所有線條的 highlight
+		clearAllHighlights();
+		
+		int highlightCount = 0;
+		int lineCount = 0;
+		
+		// 遍歷所有成員，找出線條
+		for (int i = 0; i < members.size(); i++)
+		{
+			JPanel member = members.get(i);
+			System.out.println("檢查成員[" + i + "]: " + member.getClass().getSimpleName());
+			
+			int lineType = core.isLine(member);
+			System.out.println("  isLine 結果: " + lineType);
+			
+			if (lineType >= 0) // 是線條
+			{
+				lineCount++;
+				System.out.println("  這是一條線，類型: " + lineType);
+				boolean shouldHighlight = false;
+				
+				// 檢查各種類型的線條
+				switch (lineType)
+				{
+					case 0: // AssociationLine
+						AssociationLine aLine = (AssociationLine) member;
+						if ((aLine.getFrom() == component && aLine.getFromSide() == port) ||
+							(aLine.getTo() == component && aLine.getToSide() == port))
+						{
+							aLine.setHighlight(true);
+							shouldHighlight = true;
+						}
+						break;
+						
+					case 1: // CompositionLine
+						CompositionLine cLine = (CompositionLine) member;
+						if ((cLine.getFrom() == component && cLine.getFromSide() == port) ||
+							(cLine.getTo() == component && cLine.getToSide() == port))
+						{
+							cLine.setHighlight(true);
+							shouldHighlight = true;
+						}
+						break;
+						
+					case 2: // GeneralizationLine
+						GeneralizationLine gLine = (GeneralizationLine) member;
+						if ((gLine.getFrom() == component && gLine.getFromSide() == port) ||
+							(gLine.getTo() == component && gLine.getToSide() == port))
+						{
+							gLine.setHighlight(true);
+							shouldHighlight = true;
+						}
+						break;
+						
+					case 3: // DependencyLine
+						DependencyLine dLine = (DependencyLine) member;
+						if ((dLine.getFrom() == component && dLine.getFromSide() == port) ||
+							(dLine.getTo() == component && dLine.getToSide() == port))
+						{
+							dLine.setHighlight(true);
+							shouldHighlight = true;
+						}
+						break;
+				}
+				
+				if (shouldHighlight)
+				{
+					highlightCount++;
+					member.repaint();
+				}
+			}
+		}
+		
+	}
+
+
+	// 清除所有線條的 highlight
+	public void clearAllHighlights()
+	{
+		for (JPanel member : members)
+		{
+			if (core.isLine(member) >= 0)
+			{
+				switch (core.isLine(member))
+				{
+					case 0:
+						((AssociationLine) member).setHighlight(false);
+						break;
+					case 1:
+						((CompositionLine) member).setHighlight(false);
+						break;
+					case 2:
+						((GeneralizationLine) member).setHighlight(false);
+						break;
+					case 3:
+						((DependencyLine) member).setHighlight(false);
+						break;
+				}
+				member.repaint();
+			}
+		}
+	}
+
 }
