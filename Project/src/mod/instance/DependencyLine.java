@@ -28,6 +28,7 @@ public class DependencyLine extends JPanel
     int                 arrowSize       = 12;
     int                 panelExtendSize = 10;
     boolean             isSelect        = false;
+    boolean             isHighlight     = false;  // 加入 highlight 狀態
     int                 selectBoxSize   = 5;
     CanvasPanelHandler  cph;
     float[]             dashPattern     = {5.0f, 5.0f}; // Define dash pattern for dashed line
@@ -53,7 +54,13 @@ public class DependencyLine extends JPanel
         
         // Cast to Graphics2D
         Graphics2D g2d = (Graphics2D) g;
-        g2d.setColor(Color.BLACK);
+        
+        // 根據 highlight 狀態設定顏色
+        if (isHighlight) {
+            g2d.setColor(Color.RED); // Highlight 時使用紅色
+        } else {
+            g2d.setColor(Color.BLACK); // 正常狀態使用黑色
+        }
         
         // Save original stroke
         java.awt.Stroke originalStroke = g2d.getStroke();
@@ -61,12 +68,12 @@ public class DependencyLine extends JPanel
         // Set dashed stroke
         float[] dash = {5.0f, 5.0f};
         BasicStroke dashedStroke = new BasicStroke(
-            1.0f,                  // Width
-            BasicStroke.CAP_BUTT,  // End cap
-            BasicStroke.JOIN_MITER,// Join style
-            10.0f,                 // Miter limit
-            dash,                  // Dash pattern
-            0.0f                   // Dash phase
+            isHighlight ? 2.0f : 1.0f,  // Highlight 時加粗
+            BasicStroke.CAP_BUTT,
+            BasicStroke.JOIN_MITER,
+            10.0f,
+            dash,
+            0.0f
         );
         
         g2d.setStroke(dashedStroke);
@@ -115,8 +122,7 @@ public class DependencyLine extends JPanel
         int x2 = tpPrime.x - (int)(arrowSize * Math.cos(angle + Math.PI/5));
         int y2 = tpPrime.y - (int)(arrowSize * Math.sin(angle + Math.PI/5));
         
-        // 繪製箭頭
-        g2d.setColor(Color.BLACK);
+        // 繪製箭頭，使用相同的顏色
         g2d.drawLine(tpPrime.x, tpPrime.y, x1, y1);
         g2d.drawLine(tpPrime.x, tpPrime.y, x2, y2);
     }
@@ -210,5 +216,37 @@ public class DependencyLine extends JPanel
     public void setSelect(boolean isSelect)
     {
         this.isSelect = isSelect;
+    }
+    
+    // 加入 highlight 相關的 getter 和 setter
+    public boolean isHighlight()
+    {
+        return isHighlight;
+    }
+    
+    public void setHighlight(boolean highlight)
+    {
+        this.isHighlight = highlight;
+    }
+    
+    // 加入存取 from, to, fromSide, toSide 的 getter 方法
+    public JPanel getFrom()
+    {
+        return from;
+    }
+    
+    public JPanel getTo()
+    {
+        return to;
+    }
+    
+    public int getFromSide()
+    {
+        return fromSide;
+    }
+    
+    public int getToSide()
+    {
+        return toSide;
     }
 }
